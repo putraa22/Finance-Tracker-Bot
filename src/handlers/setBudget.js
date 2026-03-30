@@ -10,6 +10,12 @@ export async function handleSetBudget(ctx, user) {
   if (!category || Number.isNaN(amount)) {
     return replyMd(ctx, "❌ Format: `/setbudget food 1000000`");
   }
+  if (!Number.isFinite(amount) || !Number.isInteger(amount)) {
+    return replyMd(
+      ctx,
+      "❌ Nominal harus angka bulat (rupiah). Contoh: `/setbudget food 1000000`",
+    );
+  }
 
   const budget = await prisma.budget.upsert({
     where: {

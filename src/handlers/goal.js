@@ -1,20 +1,23 @@
-import { formatRupiah } from "../lib/format.js";
+import { formatRupiah, progressBar } from "../lib/format.js";
 import { goalProgressStatusLabel } from "../lib/goalStatus.js";
 import { replyMd } from "../lib/telegram.js";
-import { getGoalsForUser, aggregateTotalIncomeForUser } from "../services/goals.js";
+import {
+  getGoalsForUser,
+  aggregateNetIncomeForUser,
+} from "../services/goals.js";
 
-function buildGoalProgressText({ goals, totalIncome }) {
-  let text = "🎯 Progress Goal:\n\n";
+function buildGoalProgressText({ goals, totalNet }) {
+  let text = "🎯 Progress Goal (saldo bersih):\n\n";
 
   for (const g of goals) {
     const target = g.target || 0;
-    const percentNum = target > 0 ? (totalIncome / target) * 100 : 0;
+    const percentNum = target > 0 ? (totalNet / target) * 100 : 0;
     const percentDisplay = Math.round(percentNum);
     const status = goalProgressStatusLabel(percentNum);
 
     text += `${g.name}\n`;
-    text += `${formatRupiah(totalIncome)} / ${formatRupiah(target)} (${percentDisplay}%)\n`;
-    text += `${status}\n\n`;
+    text += `${formatRupiah(totalNet)} / ${formatRupiah(target)} (${percentDisplay}%)\n`;
+    text += `${progressBar(percentNum)} ${status}\n\n`;
   }
 
   return text.trimEnd();
@@ -30,14 +33,16 @@ export async function handleGoal(ctx, user) {
         "",
         "_Yang muncul di `/budget` (mis. food, nabung) itu dari `/setbudget`, bukan dari `/setgoal`._",
         "",
+        "_Goal dihitung dari saldo bersih (pemasukan - pengeluaran) sepanjang waktu._",
+        "",
         "Untuk isi `/goal`, pakai contoh:",
         "`/setgoal nabung 10000000`",
       ].join("\n"),
     );
   }
 
-  const totalIncome = await aggregateTotalIncomeForUser(user.id);
-  const text = buildGoalProgressText({ goals, totalIncome });
+  const totalNet = await aggregateNetIncomeForUser(user.id);
+  const text = buildGoalProgressText({ goals, totalNet });
 
   return ctx.reply(text);
 }

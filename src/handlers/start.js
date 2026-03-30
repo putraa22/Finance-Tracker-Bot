@@ -1,7 +1,8 @@
 import { Markup } from "telegraf";
+import { escapeMarkdown } from "../lib/telegram.js";
 
 export async function handleStart(ctx) {
-  const name = ctx.from?.first_name ? `, ${ctx.from.first_name}` : "";
+  const name = ctx.from?.first_name ? `, ${escapeMarkdown(ctx.from.first_name)}` : "";
   const welcomeText = [
     `💼 *Finance Tracker Bot*${name}`,
     "_Catat pemasukan & pengeluaran dengan cepat, rapi, dan terstruktur._",
@@ -13,10 +14,10 @@ export async function handleStart(ctx) {
     "`+50000 gaji`  •  `-25000 makan`",
     "",
     "*Kategori otomatis*",
-    "- `salary` (gaji)",
-    "- `food` (makan, kopi)",
-    "- `transport` (bensin)",
-    "- `general` (lainnya)",
+    "- `salary` (Gaji)",
+    "- `food` (Makan & Kopi)",
+    "- `transport` (Transport)",
+    "- `general` (Lainnya)",
     "",
     "*Budget*",
     "- Set: `/setbudget food 1000000`",
@@ -32,6 +33,8 @@ export async function handleStart(ctx) {
     "*Tips*",
     "- Ketik `/` untuk melihat semua command.",
     "- Gunakan `/clear` untuk hapus data (butuh konfirmasi).",
+    "- `/last 5` untuk lihat transaksi terakhir (default 5).",
+    "- `/delete <id> CONFIRM` untuk hapus transaksi tertentu.",
   ].join("\n");
 
   const actions = Markup.inlineKeyboard([
@@ -48,14 +51,6 @@ export async function handleStart(ctx) {
       Markup.button.callback("🧹 Clear", "go:clear"),
     ],
   ]);
-
-  const keyboard = Markup.keyboard([
-    ["/summary", "/today", "/monthly", "/analysis"],
-    ["/budget", "/setbudget", "/setgoal", "/goal"],
-    ["/clear"],
-  ])
-    .resize()
-    .persistent();
 
   await ctx.reply(welcomeText, { parse_mode: "Markdown", ...actions });
 }

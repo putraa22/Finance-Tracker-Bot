@@ -1,8 +1,9 @@
 import dayjs from "dayjs";
 import { prisma } from "../db.js";
 import { TX_TYPE } from "../constants.js";
-import { formatRupiah, budgetPercentUsed } from "../lib/format.js";
+import { formatRupiah, budgetPercentUsed, progressBar } from "../lib/format.js";
 import { replyMd } from "../lib/telegram.js";
+import { getCategoryLabel } from "../lib/categories.js";
 
 export async function handleBudget(ctx, user) {
   const budgets = await prisma.budget.findMany({
@@ -36,10 +37,11 @@ export async function handleBudget(ctx, user) {
     const used = usedMap.get(b.category) ?? 0;
     const limit = b.limitAmount || 0;
     const percent = budgetPercentUsed(used, limit);
+    const bar = progressBar(percent);
 
     lines.push(
-      `• ${b.category}`,
-      `${formatRupiah(used)} / ${formatRupiah(limit)} (${percent}%)`,
+      `• ${getCategoryLabel(b.category)} (${b.category})`,
+      `${bar} ${formatRupiah(used)} / ${formatRupiah(limit)} (${percent}%)`,
       "",
     );
   }

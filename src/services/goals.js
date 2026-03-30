@@ -17,3 +17,20 @@ export async function aggregateTotalIncomeForUser(userId) {
   return income._sum.amount ?? 0;
 }
 
+// "Tabungan" untuk Goal dihitung sebagai saldo bersih:
+// total pemasukan - total pengeluaran (sepanjang waktu).
+export async function aggregateNetIncomeForUser(userId) {
+  const [income, expense] = await Promise.all([
+    prisma.transaction.aggregate({
+      _sum: { amount: true },
+      where: { userId, type: TX_TYPE.INCOME },
+    }),
+    prisma.transaction.aggregate({
+      _sum: { amount: true },
+      where: { userId, type: TX_TYPE.EXPENSE },
+    }),
+  ]);
+
+  return (income._sum.amount ?? 0) - (expense._sum.amount ?? 0);
+}
+

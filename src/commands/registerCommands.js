@@ -9,6 +9,8 @@ export async function registerBotCommands(bot) {
     { command: "setgoal", description: "Set target tabungan / goal" },
     { command: "goal", description: "Lihat progress goal" },
     { command: "budget", description: "Lihat budget bulan ini" },
+    { command: "last", description: "Transaksi terakhir" },
+    { command: "delete", description: "Hapus transaksi (konfirmasi)" },
     { command: "clear", description: "Hapus data (dengan konfirmasi)" },
   ]);
 

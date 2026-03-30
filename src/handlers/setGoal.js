@@ -11,7 +11,11 @@ function parseSetGoalMessage(text) {
   const amount = Number.parseFloat(parts.at(-1));
   const name = parts.slice(1, -1).join(" ").trim();
 
-  if (!name || Number.isNaN(amount)) {
+  if (!name || !Number.isFinite(amount) || Number.isNaN(amount)) {
+    return null;
+  }
+
+  if (!Number.isInteger(amount)) {
     return null;
   }
 
@@ -23,7 +27,7 @@ export async function handleSetGoal(ctx, user) {
   if (!parsed) {
     return replyMd(
       ctx,
-      "❌ Format: `/setgoal nabung 5000000`\n_Nama bisa beberapa kata; nominal selalu di akhir._",
+      "❌ Format: `/setgoal nabung 5000000`\n_Nama bisa beberapa kata; nominal harus angka bulat rupiah dan selalu di akhir._",
     );
   }
 

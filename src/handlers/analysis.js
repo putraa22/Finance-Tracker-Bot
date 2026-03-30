@@ -1,5 +1,6 @@
 import { formatRupiah } from "../lib/format.js";
 import { analyzeCurrentMonthExpenses } from "../services/analysis.js";
+import { getCategoryLabel } from "../lib/categories.js";
 
 function buildInsight({ weekday, weekend, topCategory, diff, percent }) {
   let insight = "";
@@ -9,7 +10,7 @@ function buildInsight({ weekday, weekend, topCategory, diff, percent }) {
     : "📅 Pengeluaran lebih stabil di weekday\n";
 
   if (topCategory) {
-    insight += `💸 Kategori terbesar: ${topCategory[0]}\n`;
+    insight += `💸 Kategori terbesar: ${getCategoryLabel(topCategory[0])} (${topCategory[0]})\n`;
   }
 
   if (diff > 0) {
@@ -30,11 +31,16 @@ export async function handleAnalysis(ctx, user) {
   }
 
   const insight = buildInsight(result);
-  const {
-    weekday,
-    weekend,
-    currentTotal,
-  } = result;
+  const { weekday, weekend, currentTotal, topCategories, avgPerDay, budgetTop } = result;
+
+  const topCategoryLines = (topCategories || []).map((c, idx) => (
+    `${idx + 1}. ${getCategoryLabel(c.category)} (${c.category}) - ${formatRupiah(c.total)} (${c.percent}%)`
+  ));
+
+  const budgetTopLines = (budgetTop || []).map(
+    (b) =>
+      `• ${getCategoryLabel(b.category)} (${b.category}): ${formatRupiah(b.used)} / ${formatRupiah(b.limit)} (${b.percent}%)`,
+  );
 
   return ctx.reply(
     [
@@ -44,7 +50,14 @@ export async function handleAnalysis(ctx, user) {
       `Weekend: ${formatRupiah(weekend)}`,
       "",
       `Total bulan ini: ${formatRupiah(currentTotal)}`,
+      `Rata-rata/hari: ${formatRupiah(avgPerDay)}`,
       "",
+      ...(topCategoryLines.length
+        ? ["Top kategori (pengeluaran):", ...topCategoryLines, ""]
+        : []),
+      ...(budgetTopLines.length
+        ? ["Budget terkait (bulan ini):", ...budgetTopLines, ""]
+        : []),
       insight,
     ].join("\n"),
   );

@@ -11,6 +11,8 @@ import { handleSetBudget } from "./setBudget.js";
 import { handleSetGoal } from "./setGoal.js";
 import { handleGoal } from "./goal.js";
 import { handleAnalysis } from "./analysis.js";
+import { handleLast } from "./last.js";
+import { handleDelete } from "./delete.js";
 
 export function installHandlers(bot) {
   bot.start(handleStart);
@@ -25,5 +27,7 @@ export function installHandlers(bot) {
   bot.command("setgoal", (ctx) => runWithUser(ctx, handleSetGoal));
   bot.command("goal", (ctx) => runWithUser(ctx, handleGoal));
   bot.command("budget", (ctx) => runWithUser(ctx, handleBudget));
+  bot.command("last", (ctx) => runWithUser(ctx, handleLast));
+  bot.command("delete", (ctx) => runWithUser(ctx, handleDelete));
   bot.command("clear", (ctx) => runWithUser(ctx, handleClear));
 }

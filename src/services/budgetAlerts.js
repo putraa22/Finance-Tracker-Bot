@@ -1,6 +1,7 @@
 import dayjs from "dayjs";
 import { prisma } from "../db.js";
 import { TX_TYPE } from "../constants.js";
+import { getCategoryLabel } from "../lib/categories.js";
 
 export async function maybeWarnBudget(ctx, userId, category) {
   const budget = await prisma.budget.findFirst({
@@ -29,8 +30,8 @@ export async function maybeWarnBudget(ctx, userId, category) {
   const percent = (used / limit) * 100;
 
   if (percent >= 100) {
-    await ctx.reply(`🚨 Budget ${category} HABIS!`);
+    await ctx.reply(`🚨 Budget ${getCategoryLabel(category)} HABIS!`);
   } else if (percent >= 80) {
-    await ctx.reply(`⚠️ Budget ${category} sudah ${percent.toFixed(0)}%`);
+    await ctx.reply(`⚠️ Budget ${getCategoryLabel(category)} sudah ${percent.toFixed(0)}%`);
   }
 }

@@ -1,6 +1,7 @@
 import { prisma } from "../db.js";
 import { TX_TYPE } from "../constants.js";
 import { formatRupiah } from "../lib/format.js";
+import { getCategoryLabel } from "../lib/categories.js";
 
 export async function aggregateIncomeExpenseForUser(userId) {
   const [incomeAgg, expenseAgg] = await Promise.all([
@@ -33,7 +34,7 @@ export async function fetchUserTransactionsInRange(userId, start, end, orderBy) 
 export function formatTransactionLine(t) {
   const sign = t.type === TX_TYPE.INCOME ? "+" : "-";
   const note = t.note ? ` ${t.note}` : "";
-  return `${sign}${formatRupiah(t.amount)}${note} (${t.category})`;
+  return `${sign}${formatRupiah(t.amount)}${note} (${getCategoryLabel(t.category)}: ${t.category})`;
 }
 
 export function monthlyIncomeExpenseAndInsight(transactions) {
@@ -51,7 +52,9 @@ export function monthlyIncomeExpenseAndInsight(transactions) {
   }
 
   const topEntry = Object.entries(expenseByCategory).sort((a, b) => b[1] - a[1])[0];
-  const insight = topEntry ? `💡 Terbesar: ${topEntry[0]} (${formatRupiah(topEntry[1])})` : "";
+  const insight = topEntry
+    ? `💡 Terbesar: ${getCategoryLabel(topEntry[0])} (${topEntry[0]}) (${formatRupiah(topEntry[1])})`
+    : "";
 
   return { income, expense, insight };
 }
