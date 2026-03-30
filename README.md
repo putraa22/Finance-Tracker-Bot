@@ -1,21 +1,39 @@
 # Finance Tracker Telegram Bot
 
-Bot Telegram sederhana untuk mencatat pemasukan/pengeluaran, melihat ringkasan, dan mengelola budget per kategori. Dibangun dengan **Telegraf** + **PostgreSQL** + **Prisma**.
+Bot Telegram untuk mencatat pemasukan/pengeluaran, melihat ringkasan & analisis, mengatur budget per kategori, dan mengejar target tabungan (goal). Dibangun dengan **Telegraf** + **PostgreSQL** + **Prisma**.
 
 ## Fitur
 
-- **Catat transaksi cepat** lewat chat:
-  - Income: `+50000 gaji`
-  - Expense: `-25000 makan`
+- **Catat transaksi cepat** lewat chat (bukan slash command):
+  - Pemasukan: `+50000 gaji`
+  - Pengeluaran: `-25000 makan`
 - **Ringkasan**:
-  - Semua transaksi (`/summary`)
-  - Hari ini (`/today`)
-  - Bulan ini + insight kategori terbesar (`/monthly`)
+  - Semua waktu: income, expense, saldo (`/summary`)
+  - Hari ini: daftar transaksi (`/today`)
+  - Bulan ini: totals + insight kategori pengeluaran terbesar (`/monthly`)
+- **Analisis bulan berjalan** (`/analysis`):
+  - Pengeluaran weekday vs weekend
+  - Total bulan ini + perbandingan vs bulan lalu (%
+  - Top kategori pengeluaran (hingga 5) + porsi %
+  - Rata-rata pengeluaran per hari (dibagi jumlah hari di bulan)
+  - Jika ada budget: ringkasan budget terkait (pemakaian vs limit)
 - **Budget per kategori**:
-  - Set budget (`/setbudget <category> <amount>`)
-  - Lihat budget bulan ini (`/budget`)
-  - Notifikasi saat pemakaian >= 80% atau >= 100%
-- **Hapus data dengan konfirmasi** (`/clear ...`)
+  - Set / ubah (`/setbudget <category> <amount>`)
+  - Lihat bulan ini: nominal terpakai, limit, persentase, progress bar teks (`/budget`)
+  - Peringatan otomatis setelah input expense jika pemakaian **≥ 80%** atau **≥ 100%**
+- **Goal (target tabungan)**:
+  - Set / ubah (`/setgoal <nama...> <nominal>` — nominal selalu di akhir, nama bisa beberapa kata)
+  - Lihat progress (`/goal`): berdasarkan **saldo bersih** (total pemasukan − total pengeluaran sepanjang waktu), bukan hanya total gaji
+- **Operasional transaksi**:
+  - Daftar transaksi terbaru (`/last` atau `/last <N>`, maks. 20, default 5)
+  - Hapus satu transaksi by id (`/delete <id> CONFIRM`)
+- **Hapus data massal** dengan konfirmasi untuk mode sensitif (`/clear ...`)
+- **Quick actions**: `/start` menampilkan panduan + tombol inline (ringkasan, hari ini, bulan ini, analisis, budget, bantuan clear)
+
+## Tampilan & aturan input
+
+- **Nominal**: harus **angka bulat** (rupiah, tanpa desimal) untuk transaksi chat, `/setbudget`, dan `/setgoal`.
+- **Kategori di UI**: bot menampilkan label ramah pengguna (mis. Gaji, Makan & Kopi) sambil tetap menyimpan kode internal (`salary`, `food`, …) untuk budget dan query.
 
 ## Stack
 
@@ -28,16 +46,14 @@ Bot Telegram sederhana untuk mencatat pemasukan/pengeluaran, melihat ringkasan, 
 
 - Node.js versi LTS (disarankan)
 - PostgreSQL (local / docker / managed)
-- Token Bot Telegram dari **@BotFather**
+- Token bot dari **@BotFather**
 
-## Konfigurasi Environment (tanpa membocorkan `.env`)
+## Konfigurasi environment
 
-Aplikasi membutuhkan 2 environment variable berikut:
+Aplikasi membutuhkan:
 
 - **`BOT_TOKEN`**: token bot dari @BotFather
 - **`DATABASE_URL`**: connection string PostgreSQL
-
-Gunakan file contoh `.env.example`, lalu buat `.env` sendiri.
 
 ```bash
 cp .env.example .env
@@ -45,7 +61,7 @@ cp .env.example .env
 
 Isi `.env` dengan nilai milik kamu (jangan commit).
 
-## Setup Database (Prisma)
+## Setup database (Prisma)
 
 1. Install dependency:
 
@@ -53,48 +69,52 @@ Isi `.env` dengan nilai milik kamu (jangan commit).
 npm install
 ```
 
-2. Pastikan `DATABASE_URL` sudah benar dan database sudah ada.
-3. Jalankan migration Prisma:
+2. Pastikan `DATABASE_URL` benar dan database sudah ada.
+3. Jalankan migration:
 
 ```bash
 npx prisma migrate deploy
 ```
 
-Opsional (untuk melihat data via UI Prisma Studio):
+Opsional:
 
 ```bash
 npx prisma studio
 ```
 
-## Menjalankan Bot
-
-Jalankan:
+## Menjalankan bot
 
 ```bash
 node index.js
 ```
 
-Saat sukses, akan muncul log `Bot running...`.
+Saat sukses muncul log `Bot running...`.
 
-## Command Bot
+## Command bot
 
-Bot akan mendaftarkan command berikut ke Telegram saat start:
+Command terdaftar ke menu Telegram saat bot start:
 
-- **`/start`**: panduan + tombol quick actions
-- **`/summary`**: ringkasan semua transaksi (income/expense/saldo)
-- **`/today`**: daftar transaksi hari ini
-- **`/monthly`**: ringkasan bulan ini + kategori expense terbesar
-- **`/setbudget`**: set budget per kategori
-  - Format: `/setbudget food 1000000`
-- **`/budget`**: lihat budget bulan ini + persentase pemakaian
-- **`/clear`**: bantuan hapus data + mode hapus
+| Command | Deskripsi |
+|--------|------------|
+| `/start` | Panduan + quick actions (inline keyboard) |
+| `/summary` | Ringkasan semua transaksi (income / expense / saldo) |
+| `/today` | Transaksi hari ini |
+| `/monthly` | Ringkasan bulan ini + insight kategori terbesar |
+| `/analysis` | Analisis pengeluaran bulan ini (top kategori, avg/hari, budget, dll.) |
+| `/setbudget` | Set budget per kategori |
+| `/budget` | Budget bulan ini + progress bar |
+| `/setgoal` | Set target goal |
+| `/goal` | Progress goal (saldo bersih vs target) |
+| `/last` | Transaksi terakhir (`/last` atau `/last 10`) |
+| `/delete` | Hapus transaksi (`/delete <id> CONFIRM`) |
+| `/clear` | Hapus data (lihat bawah) |
 
-## Format Input Transaksi (via chat)
+## Format input transaksi (via chat)
 
-Kirim pesan teks (bukan command) dengan format:
+Bukan command; kirim teks:
 
-- **Income**: `+<amount> <note...>`
-- **Expense**: `-<amount> <note...>`
+- **Pemasukan**: `+<nominal_bulat> <catatan...>`
+- **Pengeluaran**: `-<nominal_bulat> <catatan...>`
 
 Contoh:
 
@@ -102,67 +122,63 @@ Contoh:
 - `-25000 makan siang`
 - `-15000 kopi`
 
-Jika format nominal tidak valid, bot akan membalas contoh format yang benar.
+## Kategori otomatis
 
-## Kategori Otomatis
+Dari isi `note` (case-insensitive):
 
-Bot akan mencoba menebak kategori dari `note` (huruf kecil):
+| Kata kunci (contoh) | Kode disimpan |
+|---------------------|---------------|
+| makan, kopi | `food` |
+| bensin | `transport` |
+| gaji | `salary` |
+| lainnya | `general` |
 
-- `makan` / `kopi` → `food`
-- `bensin` → `transport`
-- `gaji` → `salary`
-- selain itu → `general`
+Kategori dipakai untuk ringkasan, budget, dan analisis.
 
-Catatan: kategori ini dipakai untuk ringkasan per kategori dan budget warning.
+## Budget
 
-## Budget Warning
+- **Set**: `/setbudget food 1000000` (kategori = kode yang dipakai di DB, huruf kecil)
+- **Lihat**: `/budget`
+- **Warning** setelah expense: ≥ 80% (peringatan), ≥ 100% (habis)
 
-Saat kamu mencatat **expense**, bot akan mengecek budget kategori terkait untuk bulan berjalan:
+## Goal
 
-- **>= 80%**: peringatan
-- **>= 100%**: budget dianggap habis
+- **Set**: `/setgoal nabung 10000000`
+- **Progress** di `/goal`: `saldo bersih = Σ income − Σ expense` dibanding `target` per goal yang kamu set.
 
-## Hapus Data (`/clear`)
+## Transaksi terakhir & hapus satu
 
-Perintah `/clear` punya beberapa mode (sebagian butuh `CONFIRM`):
+- `/last` — 5 transaksi terakhir  
+- `/last 15` — hingga 20  
+- `/delete 42 CONFIRM` — hapus transaksi id 42 milik user kamu
 
-- **Transaksi**
-  - `/clear today`
-  - `/clear month`
-  - `/clear all CONFIRM`
-- **Budget**
-  - `/clear budgets CONFIRM`
-- **Semua data**
-  - `/clear everything CONFIRM`
+## Hapus data (`/clear`)
 
-## Skema Database (ringkas)
+Sebagian mode butuh `CONFIRM`:
 
-- **User**
-  - `telegramId` unik per user Telegram
-  - relasi ke transaksi dan budget
-- **Transaction**
-  - `type`: `income` atau `expense` (string)
-  - `amount`: float
-  - `category`: string (hasil deteksi)
-  - `note`: opsional
-  - `createdAt`: waktu dibuat
-- **Budget**
-  - unik per kombinasi (`userId`, `category`)
-  - `limitAmount`: float
+- **Transaksi**: `/clear today`, `/clear month`, `/clear all CONFIRM`
+- **Budget saja**: `/clear budgets CONFIRM`
+- **Semua (transaksi + budget + goal)**: `/clear everything CONFIRM`
 
-Detail ada di `prisma/schema.prisma`.
+Tanpa argumen: `/clear` menampilkan bantuan.
+
+## Skema database (ringkas)
+
+- **User** — `telegramId` unik; relasi ke transaksi, budget, goal
+- **Transaction** — `type`: `income` / `expense`; `amount`; `category`; `note?`; `createdAt`
+- **Budget** — unik (`userId`, `category`); `limitAmount`
+- **Goal** — unik (`userId`, `name`); `target`
+
+Detail: `prisma/schema.prisma`.
 
 ## Troubleshooting
 
-- **Bot tidak jalan / error “Missing env var”**
-  - Pastikan `.env` ada dan berisi `BOT_TOKEN` + `DATABASE_URL`.
-- **Prisma gagal konek database**
-  - Cek `DATABASE_URL` dan pastikan server Postgres aktif & database tersedia.
-- **Command tidak muncul di menu Telegram**
-  - Restart bot agar `setMyCommands` dieksekusi ulang.
+- **Bot tidak jalan / “Missing env var”** — pastikan `.env` berisi `BOT_TOKEN` dan `DATABASE_URL`.
+- **Prisma gagal koneksi** — cek `DATABASE_URL` dan Postgres aktif.
+- **Command tidak muncul di menu** — restart bot agar `setMyCommands` jalan lagi.
+- **Parsing Markdown di `/start`** — nama kamu di-escape agar tidak merusak format pesan.
 
 ## Keamanan
 
-- Jangan pernah commit `.env` (sudah diabaikan oleh `.gitignore`).
-- Jika token bot pernah terpapar, **rotate token** di @BotFather.
-
+- Jangan commit `.env` (biasanya di `.gitignore`).
+- Jika token terpapar, **rotate** di @BotFather.
