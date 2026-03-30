@@ -12,6 +12,7 @@ model User {
   name         String?
   transactions Transaction[]
   budgets      Budget[]
+  goals        Goal[]
 }
 
 model Transaction {
@@ -36,4 +37,16 @@ model Budget {
   user User @relation(fields: [userId], references: [id])
 
   @@unique([userId, category])
+}
+
+model Goal {
+  id        Int      @id @default(autoincrement())
+  userId    Int
+  name      String
+  target    Float
+  createdAt DateTime @default(now())
+
+  user User @relation(fields: [userId], references: [id])
+
+  @@unique([userId, name])
 }

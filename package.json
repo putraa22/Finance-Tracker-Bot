@@ -5,6 +5,8 @@
   "main": "index.js",
   "scripts": {
     "start": "node index.js",
+    "postinstall": "prisma generate",
+    "db:generate": "prisma generate",
     "db:migrate": "prisma migrate deploy",
     "db:studio": "prisma studio",
     "test": "echo \"Error: no test specified\" && exit 1"
